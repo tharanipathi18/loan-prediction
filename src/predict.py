@@ -14,14 +14,17 @@ if not os.path.exists(MODEL_PATH):
 
 model = pickle.load(open(MODEL_PATH, "rb"))
 
-# load training columns
-model_columns = pickle.load(open(COLUMNS_PATH, "rb"))
+# load training columns safely
+if os.path.exists(COLUMNS_PATH):
+    model_columns = pickle.load(open(COLUMNS_PATH, "rb"))
+else:
+    model_columns = list(model.feature_names_in_)
 
 def predict_loan(data):
 
     df = pd.DataFrame([data])
 
-    # THIS IS THE FIX
+    # align features
     df = df.reindex(columns=model_columns, fill_value=0)
 
     prediction = model.predict(df)[0]
