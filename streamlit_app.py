@@ -2,38 +2,35 @@ import streamlit as st
 from src.predict import predict_loan
 import plotly.graph_objects as go
 
-st.set_page_config(
-    page_title="Loan Approval AI",
-    page_icon="🏦",
-    layout="wide"
-)
+st.set_page_config(page_title="Loan Risk AI", layout="wide")
 
-# ---------- PROFESSIONAL CSS ----------
+# ---------- STYLE ----------
 st.markdown("""
 <style>
 
-body{
-background-color:#0f172a;
+body {
+background-color: #0f172a;
 }
 
-.big-title{
+.title {
 font-size:42px;
 font-weight:700;
 color:white;
 }
 
-.subtitle{
-font-size:18px;
-color:#9ca3af;
+.subtitle {
+color:#94a3b8;
 }
 
-.card{
+.card {
+background: rgba(255,255,255,0.05);
+backdrop-filter: blur(12px);
 padding:25px;
-border-radius:12px;
-background-color:#1e293b;
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.1);
 }
 
-.metric{
+.metric {
 font-size:28px;
 font-weight:600;
 }
@@ -42,56 +39,45 @@ font-weight:600;
 """, unsafe_allow_html=True)
 
 # ---------- HEADER ----------
-st.markdown('<p class="big-title">🏦 Loan Risk Intelligence System</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">AI powered loan approval prediction</p>', unsafe_allow_html=True)
+st.markdown('<p class="title">🏦 Loan Risk Intelligence</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">AI-powered credit decision system</p>', unsafe_allow_html=True)
 
 st.divider()
 
 # ---------- LAYOUT ----------
-left, right = st.columns([1,2])
+left, center, right = st.columns([1,2,1])
 
-# ---------- INPUT PANEL ----------
+# ---------- APPLICANT PROFILE ----------
 with left:
 
     st.markdown("### Applicant Profile")
 
     age = st.number_input("Age",18,70)
-
     annual_income = st.number_input("Annual Income")
-
     credit_score = st.number_input("Credit Score")
-
-    loan_amount = st.number_input("Loan Amount Requested")
-
+    loan_amount = st.number_input("Loan Amount")
     monthly_expenses = st.number_input("Monthly Expenses")
-
     outstanding_debt = st.number_input("Outstanding Debt")
 
     loan_term = st.number_input("Loan Term")
-
     interest_rate = st.number_input("Interest Rate")
 
-    bank_history = st.slider("Bank Account History",0,20)
-
-    default_risk = st.slider("Default Risk",0.0,1.0)
-
+    bank_history = st.slider("Bank History (Years)",0,20)
+    default_risk = st.slider("Default Risk Score",0.0,1.0)
     transaction_freq = st.number_input("Transaction Frequency")
 
     city = st.selectbox("City Type",["Urban","Suburban","Rural"])
-
     loan_type = st.selectbox("Loan Type",["Personal","Home","Business"])
+    co_applicant = st.selectbox("Co-Applicant",["No","Yes"])
 
-    co_applicant = st.selectbox("Co Applicant",["No","Yes"])
+    run = st.button("Run Risk Assessment")
 
-    predict_button = st.button("🚀 Run Prediction")
+# ---------- MAIN DASHBOARD ----------
+with center:
 
+    st.markdown("### Credit Decision Dashboard")
 
-# ---------- DASHBOARD PANEL ----------
-with right:
-
-    st.markdown("### Risk Assessment Dashboard")
-
-    if predict_button:
+    if run:
 
         data = {
             "Age":age,
@@ -122,24 +108,41 @@ with right:
 
         with col2:
             if prediction == 1:
-                st.success("Approved")
+                st.success("Loan Approved")
             else:
-                st.error("Rejected")
+                st.error("Loan Rejected")
 
-        # ---------- GAUGE CHART ----------
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=probability*100,
-            title={'text': "Loan Approval Probability"},
+            title={'text': "Risk Score"},
             gauge={
-                'axis': {'range': [0,100]},
-                'bar': {'color': "#22c55e"},
-                'steps': [
-                    {'range': [0,40], 'color': "#7f1d1d"},
-                    {'range': [40,70], 'color': "#78350f"},
-                    {'range': [70,100], 'color': "#064e3b"}
+                'axis': {'range':[0,100]},
+                'bar': {'color':"#22c55e"},
+                'steps':[
+                    {'range':[0,40],'color':"#7f1d1d"},
+                    {'range':[40,70],'color':"#78350f"},
+                    {'range':[70,100],'color':"#064e3b"}
                 ]
             }
         ))
 
         st.plotly_chart(fig,use_container_width=True)
+
+# ---------- SIDE PANEL ----------
+with right:
+
+    st.markdown("### System Info")
+
+    st.info("""
+Model: Random Forest  
+Accuracy: ~85%  
+
+Signals used:
+
+• Credit score  
+• Debt ratio  
+• Income stability  
+• Transaction behavior  
+• Default risk
+""")
