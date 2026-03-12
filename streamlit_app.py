@@ -1,131 +1,56 @@
-import math
-
 import streamlit as st
-
 from src.predict import predict_loan
 
+st.title("🏦 Loan Approval Prediction")
 
-def _build_payload(
-    age: float,
-    income: float,
-    credit_score: float,
-    loan_amount: float,
-    monthly_expenses: float,
-    outstanding_debt: float,
-    loan_term: float,
-    interest_rate: float,
-) -> dict[str, float]:
-    return {
+st.subheader("Enter Applicant Details")
+
+age = st.number_input("Age", 18, 70)
+annual_income = st.number_input("Annual Income")
+credit_score = st.number_input("Credit Score")
+loan_amount = st.number_input("Loan Amount Requested")
+monthly_expenses = st.number_input("Monthly Expenses")
+outstanding_debt = st.number_input("Outstanding Debt")
+loan_term = st.number_input("Loan Term (months)")
+interest_rate = st.number_input("Interest Rate")
+
+bank_history = st.slider("Bank Account History (years)", 0, 20)
+default_risk = st.slider("Default Risk", 0.0, 1.0)
+transaction_freq = st.number_input("Transaction Frequency")
+
+city = st.selectbox("City / Town", ["Urban", "Suburban", "Rural"])
+loan_type = st.selectbox("Loan Type", ["Personal", "Home", "Business"])
+co_applicant = st.selectbox("Co Applicant", ["No", "Yes"])
+
+if st.button("Predict Loan Approval"):
+
+    data = {
         "Age": age,
-        "Annual_Income": income,
+        "Annual_Income": annual_income,
         "Credit_Score": credit_score,
         "Loan_Amount_Requested": loan_amount,
         "Monthly_Expenses": monthly_expenses,
         "Outstanding_Debt": outstanding_debt,
         "Loan_Term": loan_term,
         "Interest_Rate": interest_rate,
+        "Bank_Account_History": bank_history,
+        "Default_Risk": default_risk,
+        "Transaction_Frequency": transaction_freq,
+        "Co-Applicant": 1 if co_applicant == "Yes" else 0,
+
+        "City/Town_Urban": 1 if city == "Urban" else 0,
+        "City/Town_Suburban": 1 if city == "Suburban" else 0,
+
+        "Loan_Type_Personal": 1 if loan_type == "Personal" else 0,
+        "Loan_Type_Home": 1 if loan_type == "Home" else 0,
+        "Loan_Type_Business": 1 if loan_type == "Business" else 0,
     }
 
-
-def _safe_probability(value: object) -> float | None:
-    try:
-        prob = float(value)
-    except (TypeError, ValueError):
-        return None
-
-    if math.isnan(prob) or math.isinf(prob):
-        return None
-    return max(0.0, min(1.0, prob))
-
-
-def _is_approved(prediction: object) -> bool:
-    try:
-        return int(float(prediction)) == 1
-    except (TypeError, ValueError):
-        return str(prediction).strip().lower() in {"approved", "true", "yes"}
-
-
-st.set_page_config(
-    page_title="Loan Approval Predictor",
-    layout="wide",
-)
-
-st.markdown(
-    """
-    <h1 style='text-align: center;'>Loan Approval Prediction</h1>
-    <p style='text-align: center;'>AI powered credit risk evaluation</p>
-    """,
-    unsafe_allow_html=True,
-)
-st.divider()
-
-st.sidebar.header("Applicant Information")
-
-age = st.sidebar.number_input("Age", min_value=18, max_value=100, value=30)
-income = st.sidebar.number_input("Annual Income", min_value=1000, value=50000)
-credit_score = st.sidebar.number_input("Credit Score", min_value=300, max_value=850, value=650)
-loan_amount = st.sidebar.number_input("Loan Amount Requested", min_value=1000, value=15000)
-monthly_expenses = st.sidebar.number_input("Monthly Expenses", min_value=0, value=2000)
-outstanding_debt = st.sidebar.number_input("Outstanding Debt", min_value=0, value=5000)
-loan_term = st.sidebar.number_input("Loan Term (months)", min_value=1, value=24)
-interest_rate = st.sidebar.number_input("Interest Rate (%)", min_value=0.0, value=7.0)
-predict_btn = st.sidebar.button("Predict Loan Approval")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("Applicant Summary")
-    st.write("Age:", age)
-    st.write("Annual Income:", income)
-    st.write("Credit Score:", credit_score)
-    st.write("Loan Amount:", loan_amount)
-
-with col2:
-    st.subheader("Financial Information")
-    st.write("Monthly Expenses:", monthly_expenses)
-    st.write("Outstanding Debt:", outstanding_debt)
-    st.write("Loan Term:", loan_term)
-    st.write("Interest Rate:", interest_rate)
-
-st.divider()
-
-if predict_btn:
-    payload = _build_payload(
-        age=age,
-        income=income,
-        credit_score=credit_score,
-        loan_amount=loan_amount,
-        monthly_expenses=monthly_expenses,
-        outstanding_debt=outstanding_debt,
-        loan_term=loan_term,
-        interest_rate=interest_rate,
-    )
-
-    try:
-        prediction, probability = predict_loan(payload)
-    except Exception as exc:
-        st.error("Prediction failed. Verify model files and configuration.")
-        st.caption(str(exc))
-        st.stop()
+    prediction, probability = predict_loan(data)
 
     st.subheader("Prediction Result")
 
-    if _is_approved(prediction):
-        st.success("Loan Approved")
+    if prediction == 1:
+        st.success(f"Loan Approved ✅ (Probability: {probability:.2f})")
     else:
-        st.error("Loan Rejected")
-
-    safe_probability = _safe_probability(probability)
-    if safe_probability is None:
-        st.info("Approval probability unavailable.")
-    else:
-        st.metric(label="Approval Probability", value=f"{safe_probability * 100:.2f}%")
-        st.progress(safe_probability)
-
-st.divider()
-st.markdown(
-    """
-    <p style='text-align:center;'>Machine Learning Loan Risk Model</p>
-    """,
-    unsafe_allow_html=True,
-)
+        st.error(f"Loan Rejected ❌ (Probability: {probability:.2f})")
