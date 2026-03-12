@@ -4,6 +4,8 @@ import pandas as pd
 import gdown
 
 MODEL_PATH = "model/random_forest_model.pkl"
+COLUMNS_PATH = "model/model_columns.pkl"
+
 
 if not os.path.exists(MODEL_PATH):
     os.makedirs("model", exist_ok=True)
@@ -12,9 +14,13 @@ if not os.path.exists(MODEL_PATH):
 
 model = pickle.load(open(MODEL_PATH, "rb"))
 
+model_columns = pickle.load(open(COLUMNS_PATH, "rb"))
+
 def predict_loan(data):
 
     df = pd.DataFrame([data])
+
+    df = df.reindex(columns=model_columns, fill_value=0)
 
     prediction = model.predict(df)[0]
     probability = model.predict_proba(df)[0][1]
