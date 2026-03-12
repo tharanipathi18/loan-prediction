@@ -1,5 +1,6 @@
 import streamlit as st
 from src.predict import predict_loan
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Loan Approval AI",
@@ -7,46 +8,54 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------- CUSTOM CSS ----------
+# ---------- PROFESSIONAL CSS ----------
 st.markdown("""
 <style>
 
-.main-title {
-    font-size:40px;
-    font-weight:700;
+body{
+background-color:#0f172a;
 }
 
-.card {
-    padding:25px;
-    border-radius:12px;
-    background-color:#111827;
+.big-title{
+font-size:42px;
+font-weight:700;
+color:white;
 }
 
-.metric-box {
-    padding:20px;
-    border-radius:10px;
-    background-color:#1f2937;
+.subtitle{
+font-size:18px;
+color:#9ca3af;
+}
+
+.card{
+padding:25px;
+border-radius:12px;
+background-color:#1e293b;
+}
+
+.metric{
+font-size:28px;
+font-weight:600;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-
 # ---------- HEADER ----------
-st.markdown('<p class="main-title">🏦 Loan Approval AI</p>', unsafe_allow_html=True)
-st.caption("Machine Learning based Loan Risk Prediction System")
+st.markdown('<p class="big-title">🏦 Loan Risk Intelligence System</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">AI powered loan approval prediction</p>', unsafe_allow_html=True)
 
+st.divider()
 
 # ---------- LAYOUT ----------
-col1, col2 = st.columns([1,2])
-
+left, right = st.columns([1,2])
 
 # ---------- INPUT PANEL ----------
-with col1:
+with left:
 
-    st.subheader("Applicant Information")
+    st.markdown("### Applicant Profile")
 
-    age = st.number_input("Age", 18, 70)
+    age = st.number_input("Age",18,70)
 
     annual_income = st.number_input("Annual Income")
 
@@ -62,9 +71,9 @@ with col1:
 
     interest_rate = st.number_input("Interest Rate")
 
-    bank_history = st.slider("Bank Account History (Years)",0,20)
+    bank_history = st.slider("Bank Account History",0,20)
 
-    default_risk = st.slider("Default Risk Score",0.0,1.0)
+    default_risk = st.slider("Default Risk",0.0,1.0)
 
     transaction_freq = st.number_input("Transaction Frequency")
 
@@ -74,13 +83,13 @@ with col1:
 
     co_applicant = st.selectbox("Co Applicant",["No","Yes"])
 
-    predict_button = st.button("🚀 Predict Approval")
+    predict_button = st.button("🚀 Run Prediction")
 
 
-# ---------- RESULT PANEL ----------
-with col2:
+# ---------- DASHBOARD PANEL ----------
+with right:
 
-    st.subheader("Prediction Dashboard")
+    st.markdown("### Risk Assessment Dashboard")
 
     if predict_button:
 
@@ -106,15 +115,31 @@ with col2:
 
         prediction, probability = predict_loan(data)
 
-        p1,p2 = st.columns(2)
+        col1,col2 = st.columns(2)
 
-        with p1:
-            st.metric("Approval Probability",f"{probability*100:.2f}%")
+        with col1:
+            st.metric("Approval Probability",f"{probability*100:.1f}%")
 
-        with p2:
+        with col2:
             if prediction == 1:
-                st.success("Loan Approved")
+                st.success("Approved")
             else:
-                st.error("Loan Rejected")
+                st.error("Rejected")
 
-        st.progress(probability)
+        # ---------- GAUGE CHART ----------
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=probability*100,
+            title={'text': "Loan Approval Probability"},
+            gauge={
+                'axis': {'range': [0,100]},
+                'bar': {'color': "#22c55e"},
+                'steps': [
+                    {'range': [0,40], 'color': "#7f1d1d"},
+                    {'range': [40,70], 'color': "#78350f"},
+                    {'range': [70,100], 'color': "#064e3b"}
+                ]
+            }
+        ))
+
+        st.plotly_chart(fig,use_container_width=True)
